@@ -2,59 +2,50 @@
 
 namespace Autopoctive\ApiClient;
 
-
 use Autopoctive\ApiClient\Result\TokenResult;
 
+// @todo automaticke refreshovani tokenu - abyu se pri kazdem requestu negeneroval novy access token kdyz neni potreba
+
+
+/**
+ * Class Client
+ * @package Autopoctive\ApiClient
+ */
 class Client {
 
 	const GRANT_CLIENT_CREDENTIALS = 'client_credentials';
+	const URL = 'http://localhost/auto-moto-inzerce/www';
 
 
 	/** @var  \GuzzleHttp\Client */
 	protected $httpClient;
 
-	// @todo upravit tak abych se nemusel prihlasovat a prihlasovalo se to automaticky + automaticke refreshovani tokenu
+	/** @var  string */
+	private $apiClientId;
+
+	/** @var  string */
+	private $clientSecret;
+
 
 	/**
 	 * Client constructor.
-	 */
-	public function __construct() {
-		$this->httpClient = new \GuzzleHttp\Client();
-	}
-
-
-	/**
 	 * @param string $apiClientId
 	 * @param string $clientSecret
-	 * @return TokenResult
 	 */
-	public function authorize($apiClientId, $clientSecret) {
-		$res = $this->httpClient->request('POST', 'http://localhost/auto-moto-inzerce/www/rest-api/v1/token', [
-			'form_params' => [
-				'grant_type' => self::GRANT_CLIENT_CREDENTIALS,
-				'client_id' => $apiClientId,
-				'client_secret' => $clientSecret,
-			]
-		]);
-
-		$result = (array) json_decode($res->getBody()->getContents());
-
-		return new TokenResult(
-			$result['access_token'],
-			$result['expires_in'],
-			$result['refresh_token']
-		);
+	public function __construct($apiClientId, $clientSecret) {
+		$this->httpClient = new \GuzzleHttp\Client();
+		$this->apiClientId = $apiClientId;
+		$this->clientSecret = $clientSecret;
 	}
 
 
 	/**
-	 * @param string $accessToken
 	 * @return array
 	 */
-	public function getMarks($accessToken) {
-		$res = $this->httpClient->request('GET', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/marks', [
+	public function getMarks() {
+		$res = $this->httpClient->request('GET', self::URL . '/rest-api/v1/marks', [
 			'headers' => [
-				'Authorization' => 'Bearer ' . $accessToken,
+				'Authorization' => 'Bearer ' . $this->getAccessToken(),
 			]
 		]);
 
@@ -63,13 +54,12 @@ class Client {
 
 
 	/**
-	 * @param string $accessToken
 	 * @return array
 	 */
-	public function getEquipments($accessToken) {
-		$res = $this->httpClient->request('GET', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/equipments', [
+	public function getEquipments() {
+		$res = $this->httpClient->request('GET', self::URL . '/rest-api/v1/equipments', [
 			'headers' => [
-				'Authorization' => 'Bearer ' . $accessToken,
+				'Authorization' => 'Bearer ' . $this->getAccessToken(),
 			]
 		]);
 
@@ -78,7 +68,6 @@ class Client {
 
 
 	/**
-	 * @param string    $accessToken
 	 * @param string    $fuel
 	 * @param int       $performance
 	 * @param int       $price
@@ -106,8 +95,7 @@ class Client {
 	 * @param int       $ownerNumber
 	 * @return array
 	 */
-	public function addAdvertisement(
-		$accessToken,
+	public function createAdvertisement(
 		$fuel,
 		$performance,
 		$price,
@@ -134,9 +122,9 @@ class Client {
 		$importation,
 		$ownerNumber
 	) {
-		$res = $this->httpClient->request('PUT', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/advertisement', [
+		$res = $this->httpClient->request('PUT', self::URL . '/rest-api/v1/advertisement', [
 			'headers' => [
-				'Authorization' => 'Bearer ' . $accessToken,
+				'Authorization' => 'Bearer ' . $this->getAccessToken(),
 			],
 			'json' => [
 				'fuel' => $fuel,
@@ -172,15 +160,14 @@ class Client {
 
 
 	/**
-	 * @param string $accessToken
 	 * @param int $advertisementId
 	 * @param string $imagePath
 	 * @return array
 	 */
-	public function uploadImage($accessToken, $advertisementId, $imagePath) {
-		$res = $this->httpClient->request('PUT', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/advertisement/upload-image', [
+	public function uploadImage($advertisementId, $imagePath) {
+		$res = $this->httpClient->request('PUT', self::URL . '/rest-api/v1/advertisement/upload-image', [
 			'headers' => [
-				'Authorization' => 'Bearer ' . $accessToken,
+				'Authorization' => 'Bearer ' . $this->getAccessToken(),
 			],
 			'json' => [
 				'advertisement_id' => $advertisementId,
@@ -193,14 +180,13 @@ class Client {
 
 
 	/**
-	 * @param string 	$accessToken
 	 * @param int 		$advertisementId
 	 * @return array
 	 */
-	public function publicAdvertisement($accessToken, $advertisementId) {
-		$res = $this->httpClient->request('PUT', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/advertisement/public', [
+	public function publicAdvertisement($advertisementId) {
+		$res = $this->httpClient->request('PUT', self::URL . '/rest-api/v1/advertisement/public', [
 			'headers' => [
-				'Authorization' => 'Bearer ' . $accessToken,
+				'Authorization' => 'Bearer ' . $this->getAccessToken(),
 			],
 			'json' => [
 				'advertisement_id' => $advertisementId,
@@ -211,20 +197,49 @@ class Client {
 
 
 	/**
-	 * @param string 	$accessToken
 	 * @param int 		$advertisementId
 	 * @return array
 	 */
-	public function deleteAdvertisement($accessToken, $advertisementId) {
-		$res = $this->httpClient->request('DELETE', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/advertisement', [
+	public function deleteAdvertisement($advertisementId) {
+		$res = $this->httpClient->request('DELETE', self::URL . '/rest-api/v1/advertisement', [
 			'headers' => [
-				'Authorization' => 'Bearer ' . $accessToken,
+				'Authorization' => 'Bearer ' . $this->getAccessToken(),
 			],
 			'json' => [
 				'advertisement_id' => $advertisementId,
 			]
 		]);
 		return (array) json_decode($res->getBody()->getContents());
+	}
+
+
+	/**
+	 * @return TokenResult
+	 */
+	private function authorize() {
+		$res = $this->httpClient->request('POST', self::URL . '/rest-api/v1/token', [
+			'form_params' => [
+				'grant_type' => self::GRANT_CLIENT_CREDENTIALS,
+				'client_id' => $this->apiClientId,
+				'client_secret' => $this->clientSecret,
+			]
+		]);
+
+		$result = (array) json_decode($res->getBody()->getContents());
+
+		return new TokenResult(
+			$result['access_token'],
+			$result['expires_in'],
+			$result['refresh_token']
+		);
+	}
+
+
+	/**
+	 * @return string
+	 */
+	private function getAccessToken() {
+		return $this->authorize()->getAccessToken();
 	}
 
 
