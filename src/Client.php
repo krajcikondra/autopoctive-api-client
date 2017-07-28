@@ -13,6 +13,11 @@ class Client {
 	/** @var  \GuzzleHttp\Client */
 	protected $httpClient;
 
+	// @todo upravit tak abych se nemusel prihlasovat a prihlasovalo se to automaticky + automaticke refreshovani tokenu
+
+	/**
+	 * Client constructor.
+	 */
 	public function __construct() {
 		$this->httpClient = new \GuzzleHttp\Client();
 	}
@@ -47,7 +52,7 @@ class Client {
 	 * @return array
 	 */
 	public function getMarks($accessToken) {
-		$res = $this->httpClient->request('PUT', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/marks', [
+		$res = $this->httpClient->request('GET', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/marks', [
 			'headers' => [
 				'Authorization' => 'Bearer ' . $accessToken,
 			]
@@ -62,7 +67,7 @@ class Client {
 	 * @return array
 	 */
 	public function getEquipments($accessToken) {
-		$res = $this->httpClient->request('PUT', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/equipments', [
+		$res = $this->httpClient->request('GET', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/equipments', [
 			'headers' => [
 				'Authorization' => 'Bearer ' . $accessToken,
 			]
@@ -70,8 +75,6 @@ class Client {
 
 		return (array) json_decode($res->getBody()->getContents());
 	}
-
-
 
 
 	/**
@@ -164,6 +167,45 @@ class Client {
 			]
 		]);
 
+		return (array) json_decode($res->getBody()->getContents());
+	}
+
+
+	/**
+	 * @param string $accessToken
+	 * @param int $advertisementId
+	 * @param string $imagePath
+	 * @return array
+	 */
+	public function uploadImage($accessToken, $advertisementId, $imagePath) {
+		$res = $this->httpClient->request('PUT', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/advertisement/upload-image', [
+			'headers' => [
+				'Authorization' => 'Bearer ' . $accessToken,
+			],
+			'json' => [
+				'advertisement_id' => $advertisementId,
+				'fuel' => file_get_contents($imagePath),
+				'name' => basename($imagePath),
+			]
+		]);
+		return (array) json_decode($res->getBody()->getContents());
+	}
+
+
+	/**
+	 * @param string 	$accessToken
+	 * @param int 		$advertisementId
+	 * @return array
+	 */
+	public function publicAdvertisement($accessToken, $advertisementId) {
+		$res = $this->httpClient->request('PUT', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/advertisement/public', [
+			'headers' => [
+				'Authorization' => 'Bearer ' . $accessToken,
+			],
+			'json' => [
+				'advertisement_id' => $advertisementId,
+			]
+		]);
 		return (array) json_decode($res->getBody()->getContents());
 	}
 
