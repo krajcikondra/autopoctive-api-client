@@ -210,4 +210,22 @@ class Client {
 	}
 
 
+	/**
+	 * @param string 	$accessToken
+	 * @param int 		$advertisementId
+	 * @return array
+	 */
+	public function deleteAdvertisement($accessToken, $advertisementId) {
+		$res = $this->httpClient->request('DELETE', 'http:/localhost/auto-moto-inzerce/www/rest-api/v1/advertisement', [
+			'headers' => [
+				'Authorization' => 'Bearer ' . $accessToken,
+			],
+			'json' => [
+				'advertisement_id' => $advertisementId,
+			]
+		]);
+		return (array) json_decode($res->getBody()->getContents());
+	}
+
+
 }
