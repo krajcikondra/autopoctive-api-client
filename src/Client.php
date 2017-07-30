@@ -4,8 +4,6 @@ namespace Autopoctive\ApiClient;
 
 use Autopoctive\ApiClient\Result\TokenResult;
 
-// @todo automaticke refreshovani tokenu - abyu se pri kazdem requestu negeneroval novy access token kdyz neni potreba
-
 
 /**
  * Class Client
@@ -25,6 +23,9 @@ class Client {
 
 	/** @var  string */
 	private $clientSecret;
+
+	/** @var  TokenResult|null */
+	private $accessTokenResult;
 
 
 	/**
@@ -171,7 +172,7 @@ class Client {
 			],
 			'json' => [
 				'advertisement_id' => $advertisementId,
-				'fuel' => file_get_contents($imagePath),
+				'content' => base64_encode(file_get_contents($imagePath)),
 				'name' => basename($imagePath),
 			]
 		]);
@@ -227,10 +228,11 @@ class Client {
 
 		$result = (array) json_decode($res->getBody()->getContents());
 
-		return new TokenResult(
+		return $this->accessTokenResult = new TokenResult(
 			$result['access_token'],
 			$result['expires_in'],
-			$result['refresh_token']
+			$result['refresh_token'],
+			new \DateTime($result['expires_at'])
 		);
 	}
 
@@ -239,6 +241,13 @@ class Client {
 	 * @return string
 	 */
 	private function getAccessToken() {
+		if ($this->accessTokenResult && $this->accessTokenResult->isValid()) {
+			return $this->accessTokenResult->getAccessToken();
+		} elseif ($this->accessTokenResult && !$this->accessTokenResult->isValid()) {
+			// @todo misto uplne noveho access tokenu generovat access token pres refresh token
+			return $this->authorize()->getAccessToken();
+		}
+
 		return $this->authorize()->getAccessToken();
 	}
 
