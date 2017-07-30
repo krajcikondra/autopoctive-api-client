@@ -12,7 +12,7 @@ use Autopoctive\ApiClient\Result\TokenResult;
 class Client {
 
 	const GRANT_CLIENT_CREDENTIALS = 'client_credentials';
-	const URL = 'http://localhost/auto-moto-inzerce/www';
+	const URL = 'https://www.autopoctive.cz';
 
 
 	/** @var  \GuzzleHttp\Client */
@@ -69,12 +69,12 @@ class Client {
 
 
 	/**
+	 * @param int       $markId
+	 * @param string    $model
 	 * @param string    $fuel
 	 * @param int       $performance
 	 * @param int       $price
 	 * @param int       $made
-	 * @param int       $markId
-	 * @param string    $model
 	 * @param string	$description
 	 * @param int       $kilometers
 	 * @param string    $condition
@@ -97,12 +97,12 @@ class Client {
 	 * @return array
 	 */
 	public function createAdvertisement(
+		$markId,
+		$model,
 		$fuel,
 		$performance,
 		$price,
 		$made,
-		$markId,
-		$model,
 		$description,
 		$kilometers,
 		$condition,
